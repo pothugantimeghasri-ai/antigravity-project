@@ -1,0 +1,8 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "Frontend launcher",
+  "scripts": {
+    "start": "streamlit run \"C:/Users/megha/OneDrive/Desktop/AI Data Science Mentor/frontend/app.py\""
+  }
+}
