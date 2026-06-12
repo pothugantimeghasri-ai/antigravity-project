@@ -17,12 +17,18 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 
 @st.cache_resource
 def _load_local_backend():
-    backend_path = Path(__file__).resolve().parents[1] / "backend" / "main_grounded.py"
+    import sys
+    backend_dir = str(Path(__file__).resolve().parents[1] / "backend")
+    if backend_dir not in sys.path:
+        sys.path.insert(0, backend_dir)
+    backend_path = Path(backend_dir) / "main_grounded.py"
     spec = importlib.util.spec_from_file_location("local_main_grounded", backend_path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
     return module
+
+
 
 
 def _get_course_sources():
