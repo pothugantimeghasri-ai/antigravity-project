@@ -1127,7 +1127,7 @@ elif nav_selection == "🧠 Quiz Sandbox":
             if st.button("Generate Quiz ⚡", key="quiz_gen_btn", use_container_width=True):
                 with st.spinner("Building interactive quiz..."):
                     try:
-                        res = requests.post(f"{BACKEND_URL}/api/v1/quiz", json={"topic": quiz_topic})
+                        res = requests.post(f"{BACKEND_URL}/api/v1/quiz", json={"topic": quiz_topic}, timeout=15)
                         if res.status_code == 200:
                             st.session_state.quiz_questions = res.json()
                             st.session_state.quiz_answers = {}
@@ -1137,7 +1137,11 @@ elif nav_selection == "🧠 Quiz Sandbox":
                             st.success("Quiz loaded!")
                             st.rerun()
                         else:
-                            st.error("Quiz API returned an error.")
+                            st.error(f"Quiz API returned an error (Status Code: {res.status_code}). Details: {res.text[:200]}")
+                            st.info("💡 Tip: If you are using Render free tier, the backend may be undergoing a cold start. Please wait 30 seconds and click the button again.")
+                    except requests.exceptions.Timeout:
+                        st.error("Connection timed out. The backend server is taking too long to respond.")
+                        st.info("💡 Tip: Render free tier servers automatically spin down after inactivity. The first request takes 30-50 seconds to wake up the server. Please wait 30 seconds and try again.")
                     except Exception as e:
                         st.error(f"Could not contact quiz server: {e}")
         with col_q2:
