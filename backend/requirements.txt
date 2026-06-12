@@ -6,3 +6,7 @@ pypdf
 sentence-transformers
 numpy
 pytest
+pandas
+seaborn
+scikit-learn
+matplotlib
