@@ -997,12 +997,16 @@ elif nav_selection == "💻 Code Evaluator":
                             "submitted_code": submitted_code,
                             "assignment_context": assignment_context if assignment_context.strip() else None
                         }
-                        res = requests.post(f"{BACKEND_URL}/api/v1/evaluate", json=payload)
+                        res = requests.post(f"{BACKEND_URL}/api/v1/evaluate", json=payload, timeout=15)
                         if res.status_code == 200:
                             st.session_state.eval_result = res.json()
                             st.success("Assignment evaluated successfully!")
                         else:
-                            st.error(f"Evaluation API returned status code {res.status_code}.")
+                            st.error(f"Evaluation API returned status code {res.status_code}. Details: {res.text[:200]}")
+                            st.info("💡 Tip: If you are using Render free tier, the backend may be undergoing a cold start. Please wait 30 seconds and try again.")
+                    except requests.exceptions.Timeout:
+                        st.error("Connection timed out. The backend server is taking too long to respond.")
+                        st.info("💡 Tip: Render free tier servers automatically spin down after inactivity. The first request takes 30-50 seconds to wake up the server. Please wait 30 seconds and try again.")
                     except Exception as eval_err:
                         st.error(f"Could not connect to backend evaluation server: {eval_err}")
 
@@ -1532,7 +1536,8 @@ elif nav_selection == "🚀 Project Recommendations":
             try:
                 res = requests.post(
                     f"{BACKEND_URL}/api/v1/projects",
-                    json={"difficulty": diff_level, "topic": proj_topic, "context": enriched_prompt}
+                    json={"difficulty": diff_level, "topic": proj_topic, "context": enriched_prompt},
+                    timeout=15
                 )
                 if res.status_code == 200:
                     st.session_state.project_blueprints = res.json()
@@ -1542,7 +1547,11 @@ elif nav_selection == "🚀 Project Recommendations":
                     }
                     st.success(f"✅ Generated {len(res.json())} custom project blueprints!")
                 else:
-                    st.error(f"Project API returned status {res.status_code}.")
+                    st.error(f"Project API returned status {res.status_code}. Details: {res.text[:200]}")
+                    st.info("💡 Tip: If you are using Render free tier, the backend may be undergoing a cold start. Please wait 30 seconds and try again.")
+            except requests.exceptions.Timeout:
+                st.error("Connection timed out. The backend server is taking too long to respond.")
+                st.info("💡 Tip: Render free tier servers automatically spin down after inactivity. The first request takes 30-50 seconds to wake up the server. Please wait 30 seconds and try again.")
             except Exception as e:
                 st.error(f"Could not connect to project adviser: {e}")
 
@@ -2794,7 +2803,7 @@ elif nav_selection == "🤝 Interview Trainer":
             if st.button("Start Mock Interview ⚡", key="start_interview_btn", use_container_width=True):
                 with st.spinner("Generating interview questions..."):
                     try:
-                        res = requests.post(f"{BACKEND_URL}/api/v1/interview/start", json={"topic": topic})
+                        res = requests.post(f"{BACKEND_URL}/api/v1/interview/start", json={"topic": topic}, timeout=15)
                         if res.status_code == 200:
                             st.session_state.interview_topic = topic
                             st.session_state.interview_questions = res.json().get("questions", [])
@@ -2804,7 +2813,11 @@ elif nav_selection == "🤝 Interview Trainer":
                             st.session_state.interview_state = "question"
                             st.rerun()
                         else:
-                            st.error("Failed to generate questions. Verify backend server is running.")
+                            st.error(f"Failed to generate questions (Status Code: {res.status_code}). Details: {res.text[:200]}")
+                            st.info("💡 Tip: If you are using Render free tier, the backend may be undergoing a cold start. Please wait 30 seconds and try again.")
+                    except requests.exceptions.Timeout:
+                        st.error("Connection timed out. The backend server is taking too long to respond.")
+                        st.info("💡 Tip: Render free tier servers automatically spin down after inactivity. The first request takes 30-50 seconds to wake up the server. Please wait 30 seconds and try again.")
                     except Exception as e:
                         st.error(f"Error reaching server: {e}")
 
@@ -3153,7 +3166,7 @@ elif nav_selection == "💻 Challenge Generator":
             with st.spinner("Generating unique coding challenge..."):
                 try:
                     payload = {"language": lang, "level": level}
-                    res = requests.post(f"{BACKEND_URL}/api/v1/challenge/generate", json=payload)
+                    res = requests.post(f"{BACKEND_URL}/api/v1/challenge/generate", json=payload, timeout=15)
                     if res.status_code == 200:
                         st.session_state.challenge_lang = lang
                         st.session_state.challenge_level = level
@@ -3162,9 +3175,14 @@ elif nav_selection == "💻 Challenge Generator":
                         st.session_state.challenge_eval = None
                         st.rerun()
                     else:
-                        st.error("Failed to generate challenge. Verify backend status.")
+                        st.error(f"Failed to generate challenge (Status Code: {res.status_code}). Details: {res.text[:200]}")
+                        st.info("💡 Tip: If you are using Render free tier, the backend may be undergoing a cold start. Please wait 30 seconds and try again.")
+                except requests.exceptions.Timeout:
+                    st.error("Connection timed out. The backend server is taking too long to respond.")
+                    st.info("💡 Tip: Render free tier servers automatically spin down after inactivity. The first request takes 30-50 seconds to wake up the server. Please wait 30 seconds and try again.")
                 except Exception as e:
                     st.error(f"Error connecting to server: {e}")
+
 
     # 2. WORKSPACE STATE
     elif c_state == "workspace":
@@ -3237,14 +3255,18 @@ elif nav_selection == "💻 Challenge Generator":
                                     "description": desc,
                                     "user_code": code_val
                                 }
-                                res = requests.post(f"{BACKEND_URL}/api/v1/challenge/evaluate", json=payload)
+                                res = requests.post(f"{BACKEND_URL}/api/v1/challenge/evaluate", json=payload, timeout=15)
                                 if res.status_code == 200:
                                     st.session_state.challenge_user_code = code_val
                                     st.session_state.challenge_eval = res.json()
                                     st.session_state.challenge_state = "evaluation"
                                     st.rerun()
                                 else:
-                                    st.error("Evaluation request failed. Check backend server.")
+                                    st.error(f"Evaluation request failed (Status Code: {res.status_code}). Details: {res.text[:200]}")
+                                    st.info("💡 Tip: If you are using Render free tier, the backend may be undergoing a cold start. Please wait 30 seconds and try again.")
+                            except requests.exceptions.Timeout:
+                                st.error("Connection timed out. The backend server is taking too long to respond.")
+                                st.info("💡 Tip: Render free tier servers automatically spin down after inactivity. The first request takes 30-50 seconds to wake up the server. Please wait 30 seconds and try again.")
                             except Exception as e:
                                 st.error(f"Error reaching server: {e}")
             with c_btn2:
