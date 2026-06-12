@@ -4,3 +4,11 @@ pandas
 numpy
 matplotlib
 python-dotenv
+fastapi
+uvicorn
+pydantic
+pypdf
+sentence-transformers
+seaborn
+scikit-learn
+pytest
