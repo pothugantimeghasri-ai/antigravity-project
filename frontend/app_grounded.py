@@ -7,8 +7,17 @@ import re
 from dotenv import load_dotenv
 
 # Load configurations
-load_dotenv()
-BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+BACKEND_URL = os.getenv("BACKEND_URL")
+if not BACKEND_URL:
+    try:
+        if "BACKEND_URL" in st.secrets:
+            BACKEND_URL = st.secrets["BACKEND_URL"]
+    except Exception:
+        pass
+if not BACKEND_URL:
+    BACKEND_URL = "http://127.0.0.1:8000"
+
+
 
 # Set Page Config
 st.set_page_config(
