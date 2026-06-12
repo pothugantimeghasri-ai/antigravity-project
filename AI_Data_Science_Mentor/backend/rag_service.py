@@ -6,18 +6,33 @@ import numpy as np
 DISABLE_TRANSFORMERS = os.getenv("DISABLE_TRANSFORMERS", "false").lower() == "true"
 USE_EMBEDDINGS = False
 model = None
+seeding = True
 
-if not DISABLE_TRANSFORMERS:
-    try:
-        from sentence_transformers import SentenceTransformer
-        print("RAG Service: Loading SentenceTransformer model 'all-MiniLM-L6-v2'...")
-        model = SentenceTransformer('all-MiniLM-L6-v2')
-        USE_EMBEDDINGS = True
-        print("RAG Service: Successfully loaded SentenceTransformer model 'all-MiniLM-L6-v2'")
-    except Exception as e:
-        print(f"RAG Service: SentenceTransformer failed to load or download ({e}). Falling back to local TF-IDF keyword search.")
-else:
-    print("RAG Service: Transformers disabled via environment configuration. Using local TF-IDF keyword search.")
+def get_model():
+    global model, USE_EMBEDDINGS, vector_db
+    if DISABLE_TRANSFORMERS:
+        return None
+    if model is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+            print("RAG Service: Loading SentenceTransformer model 'all-MiniLM-L6-v2'...")
+            model = SentenceTransformer('all-MiniLM-L6-v2')
+            USE_EMBEDDINGS = True
+            print("RAG Service: Successfully loaded SentenceTransformer model 'all-MiniLM-L6-v2'")
+            
+            # Lazily compute embeddings for any already ingested document chunks
+            print("RAG Service: Lazily generating embeddings for existing document chunks...")
+            for item in vector_db:
+                if item.get("embedding") is None:
+                    try:
+                        item["embedding"] = model.encode(item["text"])
+                    except Exception as e:
+                        print(f"Error encoding existing chunk: {e}")
+            print("RAG Service: Finished generating embeddings for existing chunks.")
+        except Exception as e:
+            print(f"RAG Service: SentenceTransformer failed to load or download ({e}). Falling back to local TF-IDF keyword search.")
+            USE_EMBEDDINGS = False
+    return model
 
 # In-memory document storage: list of dicts with {"text": str, "source": str, "embedding": np.ndarray/None}
 vector_db = []
@@ -91,6 +106,10 @@ def add_document(text: str, source: str):
     documents_db[source] = text
     chunks = chunk_text(text, source)
     
+    # Load model if we are not seeding the database at startup
+    if not seeding:
+        get_model()
+    
     for chunk in chunks:
         embedding = None
         if USE_EMBEDDINGS and model is not None:
@@ -112,6 +131,9 @@ def search_rag(query: str, top_k: int = 2):
         return []
         
     results = []
+    
+    # Ensure model is lazily loaded on first search
+    get_model()
     
     if USE_EMBEDDINGS and model is not None:
         try:
@@ -145,12 +167,15 @@ def search_rag(query: str, top_k: int = 2):
 
 # Initialize and pre-seed vector database
 def initialize_database():
+    global seeding
+    seeding = True
     if DEFAULT_DOCUMENTS:
         print("RAG Service: Seeding default guides...")
         for doc in DEFAULT_DOCUMENTS:
             add_document(doc["text"], doc["source"]) 
     else:
         print("RAG Service: No default guides to seed.")    
+    seeding = False
     # Check and load user's custom study notes PDF from downloads
     # (Disabled per user request to only keep uploaded files/datasets)
     pass
