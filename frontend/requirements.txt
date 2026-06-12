@@ -12,3 +12,4 @@ sentence-transformers
 seaborn
 scikit-learn
 pytest
+python-multipart
