@@ -25,7 +25,7 @@ Built with a **FastAPI backend** (supporting local RAG, token keyword similarity
 ## 📁 Project Structure
 
 ```
-AI Data Science Mentor/
+AI_Data_Science_Mentor/
 ├── backend/
 │   ├── main.py              # FastAPI endpoints (evaluator, quizzes, challenges, interview mock engines)
 │   ├── rag_service.py       # RAG Vector Database, chunking logic, TF-IDF keyword & embeddings search

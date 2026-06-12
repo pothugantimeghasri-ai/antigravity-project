@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "description": "Backend API launcher",
   "scripts": {
-    "start": "python \"C:/Users/megha/OneDrive/Desktop/AI Data Science Mentor/backend/main.py\""
+    "start": "python main.py"
   }
 }
