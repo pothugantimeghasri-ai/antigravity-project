@@ -387,16 +387,21 @@ nav_selection = st.sidebar.radio(
 
 
 
-# Sidebar About Box
+# Sidebar Diagnostics Box
 st.sidebar.markdown("---")
-st.sidebar.markdown("""
-<div class='glass-card' style='padding: 15px; border-radius: 8px;'>
-    <h4 style='color: #a855f7; margin-top: 0; font-family: "Outfit", sans-serif;'>📘 About</h4>
-    <p style='font-size: 0.85rem; color: #9ca3af; line-height: 1.4; margin-bottom: 0;'>
-        AI Data Science Mentor helps you learn, evaluate code, generate quizzes, and get project recommendations.
-    </p>
-</div>
-""", unsafe_allow_html=True)
+with st.sidebar.expander("🔍 System Diagnostics", expanded=False):
+    st.markdown(f"**Backend URL:**\n`{BACKEND_URL}`")
+    if st.button("Check Connection ⚡", key="diag_ping_btn", use_container_width=True):
+        with st.spinner("Pinging backend..."):
+            try:
+                res = requests.get(f"{BACKEND_URL}/api/rag/documents", timeout=4)
+                if res.status_code == 200:
+                    st.success("🟢 Connected successfully!")
+                else:
+                    st.error(f"🔴 Returned status code {res.status_code}")
+            except Exception as e:
+                st.error(f"🔴 Unreachable: {e}")
+    st.info("💡 Note: Verify this matches your Render Web Service URL. If you are using Render Free tier, it may take 30-50 seconds to wake up from a cold start.")
 
 if nav_selection == "🏠 Home":
     st.markdown("""
